@@ -1,0 +1,6 @@
+@ZIBOGIS_HostAddress = http://localhost:5111
+
+GET {{ZIBOGIS_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
