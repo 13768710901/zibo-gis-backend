@@ -6,12 +6,6 @@ services:
     startCommand: dotnet out/ZIBOGIS.dll
     envVars:
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: place_4vya
-          property: connectionString
+        value: postgresql://place_4vya_user:p8xYyrEy9Edaye3STpmcJrrfC9airGHF@dpg-d7u4n3ugvqtc73c59rqg-a/place_4vya
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:1000
-databases:
-  - name: place_4vya
-    databaseName: place_4vya
-    databaseType: PostgreSQL
