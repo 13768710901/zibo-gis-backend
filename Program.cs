@@ -37,7 +37,7 @@ builder.Services.AddHttpClient("Amap", client =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS policy to allow Vue dev server and mobile access
+// CORS policy
 var corsPolicyName = "AllowAll";
 builder.Services.AddCors(options =>
 {
@@ -51,23 +51,36 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// ==============================================
+// 🔥 修复 1：生产环境也启用 Swagger
+// ==============================================
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ==============================================
+// 🔥 修复 2：禁用 HTTPS 重定向（Render 免费版必须关）
+// ==============================================
+// app.UseHttpsRedirection();
 
-// 启用静态文件服务（用于访问上传的图片）
+// 静态文件
 app.UseStaticFiles();
 
+// ==============================================
+// 🔥 修复 3：CORS 位置调整到正确位置
+// ==============================================
 app.UseCors(corsPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ==============================================
+// 🔥 修复 4：强制绑定端口 1000（Render 要求）
+// ==============================================
+app.Urls.Add("http://0.0.0.0:1000");
 
 app.Run();
