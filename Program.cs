@@ -8,16 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://0.0.0.0:1000");
 
 // 🔥 支持环境变量覆盖数据库连接字符串
-if (builder.Configuration.GetConnectionString("DefaultConnection") == null)
+var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+if (!string.IsNullOrEmpty(envConnectionString))
 {
-    var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-    if (!string.IsNullOrEmpty(envConnectionString))
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
     {
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
-        {
-            ["ConnectionStrings:DefaultConnection"] = envConnectionString
-        });
-    }
+        ["ConnectionStrings:DefaultConnection"] = envConnectionString
+    });
 }
 
 builder.Services.AddControllers();
