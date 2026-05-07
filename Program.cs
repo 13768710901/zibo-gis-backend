@@ -7,14 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 // 🔥 强制端口 1000（Render 唯一认）
 builder.WebHost.UseUrls("http://0.0.0.0:1000");
 
-// 🔥 支持环境变量覆盖数据库连接字符串
-var envConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
-if (!string.IsNullOrEmpty(envConnectionString))
+// 🔥 从环境变量读取PostgreSQL连接字符串
+var pgConnectionString = Environment.GetEnvironmentVariable("PG_CONNECTION_STRING");
+if (!string.IsNullOrEmpty(pgConnectionString))
 {
-    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
-    {
-        ["ConnectionStrings:DefaultConnection"] = envConnectionString
-    });
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = pgConnectionString;
 }
 
 builder.Services.AddControllers();
