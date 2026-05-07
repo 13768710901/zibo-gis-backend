@@ -9,9 +9,15 @@ builder.WebHost.UseUrls("http://0.0.0.0:1000");
 
 // 🔥 从环境变量读取PostgreSQL连接字符串
 var pgConnectionString = Environment.GetEnvironmentVariable("PG_CONNECTION_STRING");
+Console.WriteLine($"[DEBUG] PG_CONNECTION_STRING: {(string.IsNullOrEmpty(pgConnectionString) ? "NULL/EMPTY" : "FOUND")}");
 if (!string.IsNullOrEmpty(pgConnectionString))
 {
     builder.Configuration["ConnectionStrings:DefaultConnection"] = pgConnectionString;
+    Console.WriteLine($"[DEBUG] Connection string set: {pgConnectionString.Substring(0, 30)}...");
+}
+else
+{
+    Console.WriteLine("[DEBUG] PG_CONNECTION_STRING not found in environment");
 }
 
 builder.Services.AddControllers();
