@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: zibo-gis-backend
+    env: dotnet
+    buildCommand: dotnet publish -c Release -o out
+    startCommand: dotnet out/ZIBOGIS.dll
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: place_4vya
+          property: connectionString
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:1000
+databases:
+  - name: place_4vya
+    databaseName: place_4vya
+    databaseType: PostgreSQL

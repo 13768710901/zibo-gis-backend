@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -32,8 +32,8 @@ namespace ZIBOGIS.Controllers
             {
                 // 检查用户名是否已存在
                 const string checkSql = "SELECT COUNT(*) FROM users WHERE username = @username";
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(checkSql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(checkSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@username", request.Username);
                     await conn.OpenAsync();
@@ -50,12 +50,12 @@ namespace ZIBOGIS.Controllers
                 // 插入新用户，默认角色为user
                 const string insertSql = @"
                     INSERT INTO users (username, password_hash, real_name, role, status, created_at)
-                    VALUES (@username, @password_hash, @real_name, 'user', 'active', GETDATE());
-                    SELECT SCOPE_IDENTITY();";
+                    VALUES (@username, @password_hash, @real_name, 'user', 'active', NOW())
+                    RETURNING user_id;";
 
                 int newUserId;
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(insertSql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(insertSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@username", request.Username);
                     cmd.Parameters.AddWithValue("@password_hash", passwordHash);
@@ -97,14 +97,14 @@ namespace ZIBOGIS.Controllers
                     FROM users
                     WHERE username = @username";
 
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(sql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@username", request.Username);
-                    
+
                     await conn.OpenAsync();
                     using var reader = await cmd.ExecuteReaderAsync();
-                    
+
                     if (await reader.ReadAsync())
                     {
                         user = new User
@@ -183,8 +183,8 @@ namespace ZIBOGIS.Controllers
                 FROM users
                 WHERE user_id = @userId";
 
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@userId", int.Parse(userId));
                 await conn.OpenAsync();
@@ -274,11 +274,11 @@ namespace ZIBOGIS.Controllers
                 // 更新用户信息
                 const string updateSql = @"
                     UPDATE users 
-                    SET phone = @phone, email = @email, last_login_at = GETDATE()
+                    SET phone = @phone, email = @email, last_login_at = NOW()
                     WHERE user_id = @userId";
 
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(updateSql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(updateSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@phone", (object?)request.Phone ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@email", (object?)request.Email ?? DBNull.Value);

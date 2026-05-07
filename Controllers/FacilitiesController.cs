@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+using Npgsql;
+using System.Text.Json;
 using System.Linq;
 using System;
+using System.Data;
 
 namespace ZIBOGIS.Controllers
 {
@@ -31,8 +31,8 @@ namespace ZIBOGIS.Controllers
                 FROM Facilities
                 ORDER BY Id;";
 
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 await conn.OpenAsync();
                 using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
@@ -72,8 +72,8 @@ namespace ZIBOGIS.Controllers
                 FROM Facilities
                 WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL;";
 
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 await conn.OpenAsync();
                 using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
@@ -173,12 +173,12 @@ namespace ZIBOGIS.Controllers
 
             const string sql = @"
                 INSERT INTO Facilities (Name, Type, Longitude, Latitude, Address, CreatedAt)
-                VALUES (@Name, @Type, @Longitude, @Latitude, @Address, SYSDATETIME());
-                SELECT CAST(SCOPE_IDENTITY() AS int);";
+                VALUES (@Name, @Type, @Longitude, @Latitude, @Address, NOW())
+                RETURNING Id;";
 
             int newId;
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@Name", dto.Name);
                 cmd.Parameters.AddWithValue("@Type", (object?)dto.Type ?? DBNull.Value);
@@ -218,8 +218,8 @@ namespace ZIBOGIS.Controllers
                  WHERE Id = @Id;";
 
             int affected;
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
                 cmd.Parameters.AddWithValue("@Name", dto.Name);
@@ -247,8 +247,8 @@ namespace ZIBOGIS.Controllers
             const string sql = @"DELETE FROM Facilities WHERE Id = @Id";
 
             int affected;
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@Id", id);
 

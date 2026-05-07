@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 using System.Text.Json;
 using ZIBOGIS.Model;
 using ZIBOGIS.Services;
@@ -68,11 +68,11 @@ namespace ZIBOGIS.Controllers
                     INSERT INTO disasters (disaster_type, consequence_index, reporter_device, reporter_ip, 
                         status, lon, lat, description, images, impact_level, impact_radius_m, confirm_count)
                     VALUES (@type, @consequence, @device, @ip, '待审核', @lon, @lat, @desc, @images, @level, @radius, 1);
-                    SELECT SCOPE_IDENTITY();";
+                    RETURNING disaster_id;";
 
                 int disasterId;
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(insertSql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(insertSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@type", request.DisasterType);
                     cmd.Parameters.AddWithValue("@consequence", request.ConsequenceIndex);
@@ -130,27 +130,27 @@ namespace ZIBOGIS.Controllers
             var list = new List<Disaster>();
 
             var whereClause = "WHERE 1=1";
-            var parameters = new List<SqlParameter>();
+            var parameters = new List<NpgsqlParameter>();
 
             if (!string.IsNullOrEmpty(param.Status))
             {
                 whereClause += " AND d.status = @status";
-                parameters.Add(new SqlParameter("@status", param.Status));
+                parameters.Add(new NpgsqlParameter("@status", param.Status));
             }
             if (!string.IsNullOrEmpty(param.Type))
             {
                 whereClause += " AND d.disaster_type = @type";
-                parameters.Add(new SqlParameter("@type", param.Type));
+                parameters.Add(new NpgsqlParameter("@type", param.Type));
             }
             if (param.StartTime.HasValue)
             {
                 whereClause += " AND d.reported_at >= @startTime";
-                parameters.Add(new SqlParameter("@startTime", param.StartTime.Value));
+                parameters.Add(new NpgsqlParameter("@startTime", param.StartTime.Value));
             }
             if (param.EndTime.HasValue)
             {
                 whereClause += " AND d.reported_at <= @endTime";
-                parameters.Add(new SqlParameter("@endTime", param.EndTime.Value));
+                parameters.Add(new NpgsqlParameter("@endTime", param.EndTime.Value));
             }
 
             var sql = $@"
@@ -167,8 +167,8 @@ namespace ZIBOGIS.Controllers
 
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(sql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddRange(parameters.ToArray());
                     await conn.OpenAsync();
@@ -200,8 +200,8 @@ namespace ZIBOGIS.Controllers
 
             const string sql = "SELECT * FROM disaster_types ORDER BY type_code";
 
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 await conn.OpenAsync();
                 using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
@@ -248,8 +248,8 @@ namespace ZIBOGIS.Controllers
                     WHERE d.disaster_id = @id";
 
                 Disaster? disaster = null;
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(sql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
                     await conn.OpenAsync();
@@ -289,14 +289,14 @@ namespace ZIBOGIS.Controllers
 
             const string sql = @"
                 UPDATE disasters 
-                SET status = @status, reviewed_at = GETDATE(), reviewed_by = @reviewerId, review_comment = @comment
+                SET status = @status, reviewed_at = NOW(), reviewed_by = @reviewerId, review_comment = @comment
                 WHERE disaster_id = @id;
                 
                 SELECT status FROM disasters WHERE disaster_id = @id;";
 
             string newStatus;
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
                 cmd.Parameters.AddWithValue("@status", request.Status);
@@ -339,7 +339,7 @@ namespace ZIBOGIS.Controllers
                        ) AS distance_m
                 FROM disasters d
                 WHERE d.disaster_type = @type
-                  AND d.reported_at >= DATEADD(HOUR, -@hours, GETDATE())
+                  AND d.reported_at >= NOW() - INTERVAL '@hours hours'
                   AND d.status IN ('待审核', '已确认', '已通过')
                   AND 6371000 * ACOS(
                       COS(RADIANS(@lat)) * COS(RADIANS(d.lat)) * 
@@ -349,8 +349,8 @@ namespace ZIBOGIS.Controllers
                 ORDER BY distance_m";
 
             var list = new List<object>();
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@type", type);
                 cmd.Parameters.AddWithValue("@lat", lat);
@@ -389,11 +389,11 @@ namespace ZIBOGIS.Controllers
         {
             // 查询附近同类灾情（排除当前记录）
             const string sql = @"
-                SELECT COUNT(DISTINCT ISNULL(reporter_device, CAST(disaster_id AS NVARCHAR))) as unique_reporters
+                SELECT COUNT(DISTINCT COALESCE(reporter_device, disaster_id::text)) as unique_reporters
                 FROM disasters
                 WHERE disaster_type = @type
                   AND disaster_id != @id
-                  AND reported_at >= DATEADD(HOUR, -72, GETDATE())
+                  AND reported_at >= NOW() - INTERVAL '72 hours'
                   AND status IN ('待审核', '已确认', '已通过')
                   AND 6371000 * ACOS(
                       COS(RADIANS(@lat)) * COS(RADIANS(lat)) * 
@@ -402,8 +402,8 @@ namespace ZIBOGIS.Controllers
                   ) <= 500";
 
             int nearbyCount = 0;
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(sql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(sql, conn))
             {
                 cmd.Parameters.AddWithValue("@type", type);
                 cmd.Parameters.AddWithValue("@id", disasterId);
@@ -424,8 +424,8 @@ namespace ZIBOGIS.Controllers
                 SET confirm_count = @count, status = CASE WHEN @confirmed = 1 THEN '已确认' ELSE status END
                 WHERE disaster_id = @id";
 
-            using (var conn = new SqlConnection(_connectionString))
-            using (var cmd = new SqlCommand(updateSql, conn))
+            using (var conn = new NpgsqlConnection(_connectionString))
+            using (var cmd = new NpgsqlCommand(updateSql, conn))
             {
                 cmd.Parameters.AddWithValue("@id", disasterId);
                 cmd.Parameters.AddWithValue("@count", totalConfirm);
@@ -441,7 +441,7 @@ namespace ZIBOGIS.Controllers
                     UPDATE disasters 
                     SET confirm_count = confirm_count + 1
                     WHERE disaster_type = @type
-                      AND reported_at >= DATEADD(HOUR, -72, GETDATE())
+                      AND reported_at >= NOW() - INTERVAL '72 hours'
                       AND status IN ('待审核', '已确认')
                       AND 6371000 * ACOS(
                           COS(RADIANS(@lat)) * COS(RADIANS(lat)) * 
@@ -449,8 +449,8 @@ namespace ZIBOGIS.Controllers
                           SIN(RADIANS(@lat)) * SIN(RADIANS(lat))
                       ) <= 500";
 
-                using (var conn = new SqlConnection(_connectionString))
-                using (var cmd = new SqlCommand(batchUpdateSql, conn))
+                using (var conn = new NpgsqlConnection(_connectionString))
+                using (var cmd = new NpgsqlCommand(batchUpdateSql, conn))
                 {
                     cmd.Parameters.AddWithValue("@type", type);
                     cmd.Parameters.AddWithValue("@lat", lat);
@@ -471,7 +471,7 @@ namespace ZIBOGIS.Controllers
         /// <summary>
         /// 从DataReader映射Disaster实体
         /// </summary>
-        private Disaster MapDisasterFromReader(SqlDataReader reader)
+        private Disaster MapDisasterFromReader(NpgsqlDataReader reader)
         {
             var disaster = new Disaster();
 
@@ -531,7 +531,7 @@ namespace ZIBOGIS.Controllers
         }
 
         // 安全读取辅助方法
-        private int? SafeGetInt32(SqlDataReader reader, string columnName)
+        private int? SafeGetInt32(NpgsqlDataReader reader, string columnName)
         {
             try
             {
@@ -554,7 +554,7 @@ namespace ZIBOGIS.Controllers
             }
         }
 
-        private string? SafeGetString(SqlDataReader reader, string columnName)
+        private string? SafeGetString(NpgsqlDataReader reader, string columnName)
         {
             try
             {
@@ -567,7 +567,7 @@ namespace ZIBOGIS.Controllers
             }
         }
 
-        private DateTime? SafeGetDateTime(SqlDataReader reader, string columnName)
+        private DateTime? SafeGetDateTime(NpgsqlDataReader reader, string columnName)
         {
             try
             {

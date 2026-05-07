@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Data.SqlClient;
+using Npgsql;
+using System.Text.Json;
 using System.Data;
 
 namespace ZIBOGIS.Controllers
@@ -194,12 +195,12 @@ namespace ZIBOGIS.Controllers
         {
             var facilities = new List<FacilityPoint>();
             const string sql = @"
-                SELECT Id, Name, Type, Longitude, Latitude, ISNULL(FacilityLevel, '') as FacilityLevel
+                SELECT Id, Name, Type, Longitude, Latitude, COALESCE(FacilityLevel, '') as FacilityLevel
                 FROM Facilities
                 WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL";
 
-            using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(sql, conn);
+            using var conn = new NpgsqlConnection(_connectionString);
+            using var cmd = new NpgsqlCommand(sql, conn);
             await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
             
@@ -232,12 +233,12 @@ namespace ZIBOGIS.Controllers
             var residents = new List<ResidentPoint>();
             // 居民点：Type包含"居民"或"小区"的设施，或使用所有设施作为人口代理
             const string sql = @"
-                SELECT Id, Name, Longitude, Latitude, Type, ISNULL(FacilityLevel, '') as FacilityLevel
+                SELECT Id, Name, Longitude, Latitude, Type, COALESCE(FacilityLevel, '') as FacilityLevel
                 FROM Facilities
                 WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL";
 
-            using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(sql, conn);
+            using var conn = new NpgsqlConnection(_connectionString);
+            using var cmd = new NpgsqlCommand(sql, conn);
             await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
             
