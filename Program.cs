@@ -4,11 +4,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔥 强制端口 1000（Render 唯一要求）
+// 🔥 强制端口 1000（Render 唯一认）
 builder.WebHost.UseUrls("http://0.0.0.0:1000");
 
 builder.Services.AddControllers();
 
+// JWT
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "your-secret-key-here-at-least-32-characters";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ZIBOGIS";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ZIBOGIS-Client";
@@ -38,6 +39,7 @@ builder.Services.AddHttpClient("Amap", client =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 跨域全开
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -50,18 +52,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// 生产环境也启用 swagger
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+// ==========================================
+// 🔥 直接强制启用 swagger，不判断环境！
+// ==========================================
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "API");
+});
 
-// 关闭 HTTPS 重定向
+// 关闭 https 重定向
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-app.UseCors("AllowAll");
+app.UseCors("AllowAll"); // 🔥 跨域放最前面，保证生效
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
