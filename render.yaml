@@ -6,7 +6,5 @@ services:
     startCommand: dotnet out/ZIBOGIS.dll
     runtime: dotnet/8.0
     envVars:
-      - key: PG_CONNECTION_STRING
-        value: Host=dpg-d7u4n3ugvqtc73c59rqg-a;Database=place_4vya;Username=place_4vya_user;Password=p8xYyrEy9Edaye3STpmcJrrfC9airGHF;Port=5432
-      - key: ASPNETCORE_URLS
-        value: http://0.0.0.0:1000
+      PG_CONNECTION_STRING: Host=dpg-d7u4n3ugvqtc73c59rqg-a;Database=place_4vya;Username=place_4vya_user;Password=p8xYyrEy9Edaye3STpmcJrrfC9airGHF;Port=5432
+      ASPNETCORE_URLS: http://0.0.0.0:1000
