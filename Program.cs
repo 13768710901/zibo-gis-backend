@@ -2,23 +2,39 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+// 🔥 辅助函数：将postgresql://URL转换为Npgsql格式
+string ConvertPostgresUrlToNpgsql(string postgresUrl)
+{
+    var uri = new Uri(postgresUrl);
+    var userInfo = uri.UserInfo.Split(':');
+    var username = userInfo[0];
+    var password = userInfo[1];
+    var host = uri.Host;
+    var port = uri.Port;
+    var database = uri.AbsolutePath.TrimStart('/');
+
+    return $"Host={host};Port={port};Database={database};Username={username};Password={password}";
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔥 强制端口 1000（Render 唯一认）
 builder.WebHost.UseUrls("http://0.0.0.0:1000");
 
 // 🔥 从环境变量读取PostgreSQL连接字符串
-var pgConnectionString = Environment.GetEnvironmentVariable("PG_CONNECTION_STRING");
+var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 var logger = LoggerFactory.Create(config => config.AddConsole()).CreateLogger<Program>();
-logger.LogInformation($"[DEBUG] PG_CONNECTION_STRING: {(string.IsNullOrEmpty(pgConnectionString) ? "NULL/EMPTY" : "FOUND")}");
-if (!string.IsNullOrEmpty(pgConnectionString))
+logger.LogInformation($"[DEBUG] DATABASE_URL: {(string.IsNullOrEmpty(dbUrl) ? "NULL/EMPTY" : "FOUND")}");
+if (!string.IsNullOrEmpty(dbUrl))
 {
+    // 将postgresql://格式转换为Npgsql格式
+    var pgConnectionString = ConvertPostgresUrlToNpgsql(dbUrl);
     builder.Configuration["ConnectionStrings:DefaultConnection"] = pgConnectionString;
     logger.LogInformation($"[DEBUG] Connection string set: {pgConnectionString.Substring(0, 30)}...");
 }
 else
 {
-    logger.LogWarning("[DEBUG] PG_CONNECTION_STRING not found in environment");
+    logger.LogWarning("[DEBUG] DATABASE_URL not found in environment");
 }
 
 builder.Services.AddControllers();
