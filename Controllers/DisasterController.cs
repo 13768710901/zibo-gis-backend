@@ -175,7 +175,7 @@ namespace ZIBOGIS.Controllers
                 FROM disasters d
                 LEFT JOIN disaster_types t ON d.disaster_type::text = t.type_code::text
                 {whereClause}
-                ORDER BY d.reported_at DESC";
+                ORDER BY COALESCE(d.reported_at, '1970-01-01'::timestamp) DESC";
 
             try
             {
