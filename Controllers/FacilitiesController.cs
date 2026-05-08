@@ -27,9 +27,9 @@ namespace ZIBOGIS.Controllers
             var list = new List<object>();
 
             const string sql = @"
-                SELECT Id, Name, Type, Longitude, Latitude, Address
+                SELECT id, Name, Type, longitude, latitude, address
                 FROM facilities
-                ORDER BY Id;";
+                ORDER BY id;";
 
             using (var conn = new NpgsqlConnection(_connectionString))
             using (var cmd = new NpgsqlCommand(sql, conn))
@@ -68,9 +68,9 @@ namespace ZIBOGIS.Controllers
 
             // 获取所有设施
             const string sql = @"
-                SELECT Longitude, Latitude, Type
+                SELECT longitude, latitude, Type
                 FROM facilities
-                WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL;";
+                WHERE longitude IS NOT NULL AND latitude IS NOT NULL;";
 
             using (var conn = new NpgsqlConnection(_connectionString))
             using (var cmd = new NpgsqlCommand(sql, conn))
@@ -172,9 +172,9 @@ namespace ZIBOGIS.Controllers
                 return BadRequest(ModelState);
 
             const string sql = @"
-                INSERT INTO facilities (Name, Type, Longitude, Latitude, Address, CreatedAt)
+                INSERT INTO facilities (Name, Type, longitude, latitude, address, createdat)
                 VALUES (@Name, @Type, @Longitude, @Latitude, @Address, NOW())
-                RETURNING Id;";
+                RETURNING id;";
 
             int newId;
             using (var conn = new NpgsqlConnection(_connectionString))
@@ -212,10 +212,10 @@ namespace ZIBOGIS.Controllers
                 UPDATE facilities
                    SET Name = @Name,
                        Type = @Type,
-                       Longitude = @Longitude,
-                       Latitude = @Latitude,
-                       Address = @Address
-                 WHERE Id = @Id;";
+                       longitude = @Longitude,
+                       latitude = @Latitude,
+                       address = @Address
+                 WHERE id = @Id;";
 
             int affected;
             using (var conn = new NpgsqlConnection(_connectionString))
@@ -244,7 +244,7 @@ namespace ZIBOGIS.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            const string sql = @"DELETE FROM facilities WHERE Id = @Id";
+            const string sql = @"DELETE FROM facilities WHERE id = @Id";
 
             int affected;
             using (var conn = new NpgsqlConnection(_connectionString))

@@ -195,9 +195,9 @@ namespace ZIBOGIS.Controllers
         {
             var facilities = new List<FacilityPoint>();
             const string sql = @"
-                SELECT Id, Name, Type, Longitude, Latitude, COALESCE(FacilityLevel, '') as FacilityLevel
+                SELECT id, Name, Type, longitude, latitude, COALESCE(facilitylevel, '') as facilitylevel
                 FROM facilities
-                WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL";
+                WHERE longitude IS NOT NULL AND latitude IS NOT NULL";
 
             using var conn = new NpgsqlConnection(_connectionString);
             using var cmd = new NpgsqlCommand(sql, conn);
@@ -233,9 +233,9 @@ namespace ZIBOGIS.Controllers
             var residents = new List<ResidentPoint>();
             // 居民点：Type包含"居民"或"小区"的设施，或使用所有设施作为人口代理
             const string sql = @"
-                SELECT Id, Name, Longitude, Latitude, Type, COALESCE(FacilityLevel, '') as FacilityLevel
+                SELECT id, Name, longitude, latitude, Type, COALESCE(facilitylevel, '') as facilitylevel
                 FROM facilities
-                WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL";
+                WHERE longitude IS NOT NULL AND latitude IS NOT NULL";
 
             using var conn = new NpgsqlConnection(_connectionString);
             using var cmd = new NpgsqlCommand(sql, conn);
