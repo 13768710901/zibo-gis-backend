@@ -88,7 +88,7 @@ namespace ZIBOGIS.Controllers
                         cmd.Parameters.AddWithValue("@id", disasterId);
                         cmd.Parameters.AddWithValue("@type", request.DisasterType);
                         cmd.Parameters.AddWithValue("@consequence", request.ConsequenceIndex);
-                        cmd.Parameters.AddWithValue("@reporter", (object?)request.Reporter ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@reporter", DBNull.Value);
                         cmd.Parameters.AddWithValue("@device", (object?)request.DeviceId ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@ip", ipAddress);
                         cmd.Parameters.AddWithValue("@lon", request.Lon);
