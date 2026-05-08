@@ -497,8 +497,8 @@ namespace ZIBOGIS.Controllers
             disaster.DisasterId = reader.GetInt32(reader.GetOrdinal("disaster_id"));
             disaster.DisasterType = reader.GetString(reader.GetOrdinal("disaster_type"));
             disaster.ConsequenceIndex = SafeGetInt32(reader, "consequence_index") ?? 0;
-            disaster.ReportedAt = reader.GetDateTime(reader.GetOrdinal("reported_at"));
-            disaster.Status = reader.GetString(reader.GetOrdinal("status"));
+            disaster.ReportedAt = SafeGetDateTime(reader, "reported_at") ?? DateTime.Now;
+            disaster.Status = SafeGetString(reader, "status") ?? "待审核";
             // SQL Server中lon/lat可能是decimal类型，需要安全转换
             disaster.Lon = Convert.ToDouble(reader.GetValue(reader.GetOrdinal("lon")));
             disaster.Lat = Convert.ToDouble(reader.GetValue(reader.GetOrdinal("lat")));
