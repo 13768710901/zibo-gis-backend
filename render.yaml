@@ -4,6 +4,7 @@ services:
     env: dotnet
     buildCommand: dotnet publish -c Release -o out
     startCommand: dotnet out/ZIBOGIS.dll
+    runtime: dotnet/8.0
     envVars:
       - key: PG_CONNECTION_STRING
         value: Host=dpg-d7u4n3ugvqtc73c59rqg-a;Database=place_4vya;Username=place_4vya_user;Password=p8xYyrEy9Edaye3STpmcJrrfC9airGHF;Port=5432
