@@ -25,17 +25,23 @@ builder.WebHost.UseUrls("http://0.0.0.0:1000");
 var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 var logger = LoggerFactory.Create(config => config.AddConsole()).CreateLogger<Program>();
 logger.LogInformation($"[DEBUG] DATABASE_URL: {(string.IsNullOrEmpty(dbUrl) ? "NULL/EMPTY" : "FOUND")}");
+
+string pgConnectionString;
 if (!string.IsNullOrEmpty(dbUrl))
 {
     // 将postgresql://格式转换为Npgsql格式
-    var pgConnectionString = ConvertPostgresUrlToNpgsql(dbUrl);
-    builder.Configuration["ConnectionStrings:DefaultConnection"] = pgConnectionString;
-    logger.LogInformation($"[DEBUG] Connection string set: {pgConnectionString.Substring(0, 30)}...");
+    pgConnectionString = ConvertPostgresUrlToNpgsql(dbUrl);
+    logger.LogInformation($"[DEBUG] Connection string from DATABASE_URL: {pgConnectionString.Substring(0, 30)}...");
 }
 else
 {
-    logger.LogWarning("[DEBUG] DATABASE_URL not found in environment");
+    // 🔥 临时硬编码连接字符串用于测试
+    logger.LogWarning("[DEBUG] DATABASE_URL not found, using hardcoded connection string");
+    pgConnectionString = "Host=dpg-d7u4n3ugvqtc73c59rqg-a;Database=place_4vya;Username=place_4vya_user;Password=p8xYyrEy9Edaye3STpmcJrrfC9airGHF;Port=5432";
+    logger.LogInformation($"[DEBUG] Hardcoded connection string: {pgConnectionString.Substring(0, 30)}...");
 }
+
+builder.Configuration["ConnectionStrings:DefaultConnection"] = pgConnectionString;
 
 builder.Services.AddControllers();
 
