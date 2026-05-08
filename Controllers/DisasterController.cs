@@ -64,29 +64,41 @@ namespace ZIBOGIS.Controllers
                 var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
                 // 4. 插入数据库
-                const string insertSql = @"
-                    INSERT INTO disasters (disaster_type, consequence_index, reporter_device, reporter_ip, 
-                        status, lon, lat, description, images, impact_level, impact_radius_m, confirm_count)
-                    VALUES (@type, @consequence, @device, @ip, '待审核', @lon, @lat, @desc, @images, @level, @radius, 1);
-                    RETURNING disaster_id;";
-
                 int disasterId;
                 using (var conn = new NpgsqlConnection(_connectionString))
-                using (var cmd = new NpgsqlCommand(insertSql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@type", request.DisasterType);
-                    cmd.Parameters.AddWithValue("@consequence", request.ConsequenceIndex);
-                    cmd.Parameters.AddWithValue("@device", (object?)request.DeviceId ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@ip", ipAddress);
-                    cmd.Parameters.AddWithValue("@lon", request.Lon);
-                    cmd.Parameters.AddWithValue("@lat", request.Lat);
-                    cmd.Parameters.AddWithValue("@desc", (object?)request.Description ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@images", imageUrls.Count > 0 ? JsonSerializer.Serialize(imageUrls) : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@level", level);
-                    cmd.Parameters.AddWithValue("@radius", radius);
-
                     await conn.OpenAsync();
-                    disasterId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+                    // 先获取最大的disaster_id
+                    const string getMaxIdSql = "SELECT COALESCE(MAX(disaster_id), 0) FROM disasters";
+                    using (var getMaxIdCmd = new NpgsqlCommand(getMaxIdSql, conn))
+                    {
+                        var maxId = Convert.ToInt32(await getMaxIdCmd.ExecuteScalarAsync());
+                        disasterId = maxId + 1;
+                    }
+
+                    // 插入新记录
+                    const string insertSql = @"
+                        INSERT INTO disasters (disaster_id, disaster_type, consequence_index, reporter_device, reporter_ip,
+                            status, lon, lat, description, images, impact_level, impact_radius_m, confirm_count)
+                        VALUES (@id, @type, @consequence, @device, @ip, '待审核', @lon, @lat, @desc, @images, @level, @radius, 1)";
+
+                    using (var cmd = new NpgsqlCommand(insertSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", disasterId);
+                        cmd.Parameters.AddWithValue("@type", request.DisasterType);
+                        cmd.Parameters.AddWithValue("@consequence", request.ConsequenceIndex);
+                        cmd.Parameters.AddWithValue("@device", (object?)request.DeviceId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ip", ipAddress);
+                        cmd.Parameters.AddWithValue("@lon", request.Lon);
+                        cmd.Parameters.AddWithValue("@lat", request.Lat);
+                        cmd.Parameters.AddWithValue("@desc", (object?)request.Description ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@images", imageUrls.Count > 0 ? JsonSerializer.Serialize(imageUrls) : DBNull.Value);
+                        cmd.Parameters.AddWithValue("@level", level);
+                        cmd.Parameters.AddWithValue("@radius", radius);
+
+                        await cmd.ExecuteNonQueryAsync();
+                    }
                 }
 
                 // 5. 执行众包验证（检查是否自动确认）
