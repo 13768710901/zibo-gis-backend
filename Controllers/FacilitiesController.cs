@@ -27,9 +27,9 @@ namespace ZIBOGIS.Controllers
             var list = new List<object>();
 
             const string sql = @"
-                SELECT id, Name, Type, longitude, latitude, address
+                SELECT facilities.id, facilities.Name, facilities.Type, facilities.longitude, facilities.latitude, facilities.address
                 FROM facilities
-                ORDER BY id;";
+                ORDER BY facilities.id;";
 
             using (var conn = new NpgsqlConnection(_connectionString))
             using (var cmd = new NpgsqlCommand(sql, conn))
