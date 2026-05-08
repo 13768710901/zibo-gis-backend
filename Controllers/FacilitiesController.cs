@@ -27,7 +27,7 @@ namespace ZIBOGIS.Controllers
             var list = new List<object>();
 
             const string sql = @"
-                SELECT facilities.id, facilities.Name, facilities.Type, facilities.longitude, facilities.latitude, facilities.address
+                SELECT facilities.id, facilities.""Name"", facilities.""Type"", facilities.longitude, facilities.latitude, facilities.address
                 FROM facilities
                 ORDER BY facilities.id;";
 
