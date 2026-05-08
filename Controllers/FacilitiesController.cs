@@ -28,7 +28,7 @@ namespace ZIBOGIS.Controllers
 
             const string sql = @"
                 SELECT Id, Name, Type, Longitude, Latitude, Address
-                FROM Facilities
+                FROM facilities
                 ORDER BY Id;";
 
             using (var conn = new NpgsqlConnection(_connectionString))
@@ -69,7 +69,7 @@ namespace ZIBOGIS.Controllers
             // 获取所有设施
             const string sql = @"
                 SELECT Longitude, Latitude, Type
-                FROM Facilities
+                FROM facilities
                 WHERE Longitude IS NOT NULL AND Latitude IS NOT NULL;";
 
             using (var conn = new NpgsqlConnection(_connectionString))
@@ -172,7 +172,7 @@ namespace ZIBOGIS.Controllers
                 return BadRequest(ModelState);
 
             const string sql = @"
-                INSERT INTO Facilities (Name, Type, Longitude, Latitude, Address, CreatedAt)
+                INSERT INTO facilities (Name, Type, Longitude, Latitude, Address, CreatedAt)
                 VALUES (@Name, @Type, @Longitude, @Latitude, @Address, NOW())
                 RETURNING Id;";
 
@@ -209,7 +209,7 @@ namespace ZIBOGIS.Controllers
                 return BadRequest(ModelState);
 
             const string sql = @"
-                UPDATE Facilities
+                UPDATE facilities
                    SET Name = @Name,
                        Type = @Type,
                        Longitude = @Longitude,
@@ -244,7 +244,7 @@ namespace ZIBOGIS.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            const string sql = @"DELETE FROM Facilities WHERE Id = @Id";
+            const string sql = @"DELETE FROM facilities WHERE Id = @Id";
 
             int affected;
             using (var conn = new NpgsqlConnection(_connectionString))
