@@ -79,15 +79,16 @@ namespace ZIBOGIS.Controllers
 
                     // 插入新记录
                     const string insertSql = @"
-                        INSERT INTO disasters (disaster_id, disaster_type, consequence_index, reporter_device, reporter_ip,
-                            status, lon, lat, description, images, impact_level, impact_radius_m, confirm_count)
-                        VALUES (@id, @type, @consequence, @device, @ip, '待审核', @lon, @lat, @desc, @images, @level, @radius, 1)";
+                        INSERT INTO disasters (disaster_id, disaster_type, consequence_index, reporter, reporter_device, reporter_ip,
+                            reported_at, status, lon, lat, description, images, impact_level, impact_radius_m, confirm_count)
+                        VALUES (@id, @type, @consequence, @reporter, @device, @ip, NOW(), '待审核', @lon, @lat, @desc, @images, @level, @radius, 1)";
 
                     using (var cmd = new NpgsqlCommand(insertSql, conn))
                     {
                         cmd.Parameters.AddWithValue("@id", disasterId);
                         cmd.Parameters.AddWithValue("@type", request.DisasterType);
                         cmd.Parameters.AddWithValue("@consequence", request.ConsequenceIndex);
+                        cmd.Parameters.AddWithValue("@reporter", (object?)request.Reporter ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@device", (object?)request.DeviceId ?? DBNull.Value);
                         cmd.Parameters.AddWithValue("@ip", ipAddress);
                         cmd.Parameters.AddWithValue("@lon", request.Lon);
