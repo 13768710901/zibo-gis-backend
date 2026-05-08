@@ -158,10 +158,9 @@ namespace ZIBOGIS.Controllers
                        d.reporter_ip, d.reported_at, d.status, d.lon, d.lat, d.description,
                        d.images, d.impact_level, d.impact_radius_m, d.confirm_count, d.reviewed_at,
                        d.reviewed_by, d.review_comment,
-                       t.type_name, t.consequence_options, u.real_name as reviewer_name
+                       t.type_name, t.consequence_options
                 FROM disasters d
                 LEFT JOIN disaster_types t ON d.disaster_type::text = t.type_code::text
-                LEFT JOIN users u ON d.reviewed_by = u.user_id
                 {whereClause}
                 ORDER BY d.reported_at DESC";
 
@@ -241,10 +240,9 @@ namespace ZIBOGIS.Controllers
                            d.reporter_ip, d.reported_at, d.status, d.lon, d.lat, d.description,
                            d.images, d.impact_level, d.impact_radius_m, d.confirm_count, d.reviewed_at,
                            d.reviewed_by, d.review_comment,
-                           t.type_name, t.consequence_options, u.real_name as reviewer_name
+                           t.type_name, t.consequence_options
                     FROM disasters d
                     LEFT JOIN disaster_types t ON d.disaster_type::text = t.type_code::text
-                    LEFT JOIN users u ON d.reviewed_by = u.user_id
                     WHERE d.disaster_id = @id";
 
                 Disaster? disaster = null;
