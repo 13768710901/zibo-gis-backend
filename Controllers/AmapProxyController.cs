@@ -15,6 +15,8 @@ public class AmapProxyController : ControllerBase
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(6);
     private static readonly TimeSpan FailTtl = TimeSpan.FromSeconds(30);
+    private static readonly SemaphoreSlim _rateLimit = new(1, 1);
+    private static DateTime _lastRequestTime = DateTime.MinValue;
 
     public AmapProxyController(IHttpClientFactory httpClientFactory, IMemoryCache cache, IConfiguration configuration)
     {
@@ -67,6 +69,21 @@ public class AmapProxyController : ControllerBase
             $"&city={Uri.EscapeDataString(city)}" +
             $"&extensions={Uri.EscapeDataString(extensions)}" +
             $"&offset={offset}&page={page}&output={Uri.EscapeDataString(output)}";
+
+        await _rateLimit.WaitAsync();
+        try
+        {
+            var elapsed = DateTime.UtcNow - _lastRequestTime;
+            if (elapsed < TimeSpan.FromMilliseconds(250))
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250) - elapsed);
+            }
+            _lastRequestTime = DateTime.UtcNow;
+        }
+        finally
+        {
+            _rateLimit.Release();
+        }
 
         using var resp = await client.GetAsync(path);
         var json = await resp.Content.ReadAsStringAsync();
