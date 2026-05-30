@@ -37,7 +37,7 @@ else
 {
     // 🔥 临时硬编码连接字符串用于测试
     logger.LogWarning("[DEBUG] DATABASE_URL not found, using hardcoded connection string");
-    pgConnectionString = "Host=dpg-d7u4n3ugvqtc73c59rqg-a;Database=place_4vya;Username=place_4vya_user;Password=p8xYyrEy9Edaye3STpmcJrrfC9airGHF;Port=5432";
+    pgConnectionString = "Host=dpg-d8d7mk4p3tds73f8uqv0-a;Database=zibo_gis_db_us7h;Username=zibo_gis_db_us7h_user;Password=QR6i28uFFLK5HqmqAc7wteQKWMZkr5cC;Port=5432";
     logger.LogInformation($"[DEBUG] Hardcoded connection string: {pgConnectionString.Substring(0, 30)}...");
 }
 

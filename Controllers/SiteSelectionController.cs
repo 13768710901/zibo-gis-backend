@@ -195,7 +195,7 @@ namespace ZIBOGIS.Controllers
         {
             var facilities = new List<FacilityPoint>();
             const string sql = @"
-                SELECT id, Name, Type, longitude, latitude, COALESCE(facilitylevel, '') as facilitylevel
+                SELECT id, ""Name"", ""Type"", longitude, latitude, COALESCE(""facilitylevel"", '') as facilitylevel
                 FROM facilities
                 WHERE longitude IS NOT NULL AND latitude IS NOT NULL";
 
@@ -203,7 +203,7 @@ namespace ZIBOGIS.Controllers
             using var cmd = new NpgsqlCommand(sql, conn);
             await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 var typeName = reader.GetString(2);
@@ -233,7 +233,7 @@ namespace ZIBOGIS.Controllers
             var residents = new List<ResidentPoint>();
             // 居民点：Type包含"居民"或"小区"的设施，或使用所有设施作为人口代理
             const string sql = @"
-                SELECT id, Name, longitude, latitude, Type, COALESCE(facilitylevel, '') as facilitylevel
+                SELECT id, ""Name"", longitude, latitude, ""Type"", COALESCE(""facilitylevel"", '') as facilitylevel
                 FROM facilities
                 WHERE longitude IS NOT NULL AND latitude IS NOT NULL";
 
